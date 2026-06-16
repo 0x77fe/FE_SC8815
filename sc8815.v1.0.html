@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SC8815 双向升降压充电控制器 — I2C 驱动库文档</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card-bg: #ffffff;
+    --text: #212529;
+    --text-muted: #6c757d;
+    --border: #dee2e6;
+    --primary: #2563eb;
+    --primary-light: #eff6ff;
+    --accent: #059669;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --code-bg: #f1f5f9;
+    --tag-bg: #e2e8f0;
+    --tag-text: #334155;
+    --shadow: 0 1px 3px rgba(0,0,0,.08);
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 24px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  /* Header */
+  .hero {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 40px 48px;
+    margin-bottom: 32px;
+  }
+  .hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+  .hero .subtitle { font-size: 1.05rem; opacity: .85; }
+  .hero .chip-badge {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 20px;
+    padding: 4px 16px;
+    font-size: .85rem;
+    margin-top: 14px;
+  }
+
+  /* Table of Contents */
+  .toc {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 32px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow);
+  }
+  .toc h2 { font-size: 1.15rem; margin-bottom: 12px; color: var(--primary); }
+  .toc ol { columns: 2; column-gap: 32px; padding-left: 20px; }
+  .toc li { margin-bottom: 6px; font-size: .92rem; break-inside: avoid; }
+  .toc a { color: var(--primary); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  /* Sections */
+  section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  h2 {
+    font-size: 1.35rem;
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 8px;
+    margin-bottom: 18px;
+    color: #1e293b;
+  }
+  h3 {
+    font-size: 1.1rem;
+    margin: 20px 0 10px;
+    color: #334155;
+  }
+  h4 { font-size: .95rem; margin: 14px 0 6px; color: #475569; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: .9rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #f1f5f9;
+    font-weight: 600;
+    color: #334155;
+    white-space: nowrap;
+  }
+  tr:nth-child(even) td { background: #fafbfc; }
+  td code { white-space: nowrap; }
+
+  /* Code */
+  code {
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+    font-size: .85rem;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 16px 20px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: .85rem;
+    line-height: 1.6;
+    margin: 12px 0 20px;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+  /* Tags / Badges */
+  .tag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-size: .78rem;
+    padding: 1px 8px;
+    border-radius: 4px;
+    margin-right: 4px;
+  }
+  .tag.rw { background: #dbeafe; color: #1e40af; }
+  .tag.ro { background: #fef3c7; color: #92400e; }
+  .tag.reg { background: #d1fae5; color: #065f46; }
+  .tag.warn { background: #fee2e2; color: #991b1b; }
+
+  /* Notes */
+  .note {
+    border-left: 4px solid var(--primary);
+    background: var(--primary-light);
+    padding: 10px 16px;
+    margin: 12px 0;
+    font-size: .9rem;
+    border-radius: 0 6px 6px 0;
+  }
+  .note.warn {
+    border-left-color: var(--warning);
+    background: #fffbeb;
+  }
+  .note.danger {
+    border-left-color: var(--danger);
+    background: #fef2f2;
+  }
+  .note.info {
+    border-left-color: var(--accent);
+    background: #ecfdf5;
+  }
+
+  /* Enum grid */
+  .enum-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 16px;
+    font-size: .88rem;
+    margin: 8px 0 16px 16px;
+  }
+  .enum-grid .name { font-weight: 600; color: #1e40af; }
+  .enum-grid .desc { color: var(--text-muted); }
+
+  /* Bit layout */
+  .bit-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0;
+    font-size: .88rem;
+  }
+  .bit-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: .8rem;
+    font-weight: 600;
+  }
+  .bit-cell.b7 { background: #dbeafe; color: #1e40af; }
+  .bit-cell.b6 { background: #ede9fe; color: #6d28d9; }
+  .bit-cell.b5 { background: #fce7f3; color: #9d174d; }
+  .bit-cell.b4 { background: #fef3c7; color: #92400e; }
+  .bit-cell.b3 { background: #d1fae5; color: #065f46; }
+  .bit-cell.b2 { background: #cffafe; color: #0e7490; }
+  .bit-cell.b1 { background: #fce7d4; color: #9a3412; }
+  .bit-cell.b0 { background: #e0e7ff; color: #3730a3; }
+  .bit-cell.res { background: #f1f5f9; color: #94a3b8; }
+
+  /* Method signature */
+  .sig {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: .85rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .sig .rt { color: #2563eb; font-weight: 600; }  /* return type */
+  .sig .fn { color: #059669; font-weight: 600; }   /* function name */
+
+  /* API method block */
+  .method {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 12px 0;
+    overflow: hidden;
+  }
+  .method .mhead {
+    background: #f8fafc;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: .92rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .method .mbody {
+    padding: 12px 16px;
+    font-size: .9rem;
+  }
+  .method .mbody p { margin-bottom: 6px; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: .82rem;
+    padding: 24px 0;
+    border-top: 1px solid var(--border);
+    margin-top: 32px;
+  }
+
+  @media (max-width: 768px) {
+    body { padding: 12px; }
+    .hero { padding: 24px; }
+    section { padding: 18px 16px; }
+    .toc ol { columns: 1; }
+    table { font-size: .8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ============================================================ -->
+<!-- HERO -->
+<!-- ============================================================ -->
+<div class="hero">
+  <h1>SC8815 双向升降压充电控制器</h1>
+  <p class="subtitle">Southchip 高效率同步 Buck-Boost 控制器 — Arduino/ESP32 I²C 驱动库</p>
+  <span class="chip-badge">QFN-32 (4mm×4mm) &nbsp;|&nbsp; I²C 0x74 &nbsp;|&nbsp; 1~6S Li-Ion</span>
+</div>
+
+<!-- ============================================================ -->
+<!-- TOC -->
+<!-- ============================================================ -->
+<div class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#overview">芯片概述</a></li>
+    <li><a href="#quickstart">快速开始</a></li>
+    <li><a href="#i2c">I²C 通信</a></li>
+    <li><a href="#registers">寄存器映射</a></li>
+    <li><a href="#enums">枚举类型定义</a>
+      <ul>
+        <li><a href="#enum-ircomp">IRCOMP — 电池内阻补偿</a></li>
+        <li><a href="#enum-vbat-sel">VBAT_SEL — 电池电压设定方式</a></li>
+        <li><a href="#enum-csel">CSEL — 电池串联节数</a></li>
+        <li><a href="#enum-vcell">VCELL — 单节目标电压</a></li>
+        <li><a href="#enum-ibat-ratio">IBAT_RATIO — IBAT 电流比率</a></li>
+        <li><a href="#enum-ibus-ratio">IBUS_RATIO — IBUS 电流比率</a></li>
+        <li><a href="#enum-vbat-mon-ratio">VBAT_MON_RATIO — 电池监控比率</a></li>
+        <li><a href="#enum-vbus-ratio">VBUS_RATIO — VBUS 电压比率</a></li>
+        <li><a href="#enum-en-otg">EN_OTG — 充放电模式</a></li>
+        <li><a href="#enum-vinreg-ratio">VINREG_RATIO — 动态电源比率</a></li>
+        <li><a href="#enum-freq">FREQ — 开关频率</a></li>
+        <li><a href="#enum-dt">DT — 死区时间</a></li>
+        <li><a href="#enum-ichar-sel">ICHAR_SEL — 充电电流基准</a></li>
+        <li><a href="#enum-dis-trickle">DIS_TRICKLE — 涓流充电</a></li>
+        <li><a href="#enum-dis-term">DIS_TERM — 自动终止</a></li>
+        <li><a href="#enum-fb-sel">FB_SEL — VBUS 参考源</a></li>
+        <li><a href="#enum-trickle-set">TRICKLE_SET — 涓流阈值</a></li>
+        <li><a href="#enum-dis-ovp">DIS_OVP — 过压保护</a></li>
+        <li><a href="#enum-factory">FACTORY — 工厂配置</a></li>
+        <li><a href="#enum-en-dither">EN_DITHER — 扩频抖动</a></li>
+        <li><a href="#enum-slew">SLEW — 电压斜率</a></li>
+        <li><a href="#enum-en-pgate">EN_PGATE — PGATE 引脚</a></li>
+        <li><a href="#enum-gpo-ctrl">GPO_CTRL — GPO 引脚</a></li>
+        <li><a href="#enum-ad-start">AD_START — ADC 转换</a></li>
+        <li><a href="#enum-ilim-bw">ILIM_BW — 限流带宽</a></li>
+        <li><a href="#enum-loop-set">LOOP_SET — 环路响应</a></li>
+        <li><a href="#enum-dis-short-foldback">DIS_ShortFoldBack — 短路折返</a></li>
+        <li><a href="#enum-eoc">EOC — 充电终止阈值</a></li>
+        <li><a href="#enum-en-pfm">EN_PFM — PFM 模式</a></li>
+      </ul>
+    </li>
+    <li><a href="#api">类 API 参考</a>
+      <ul>
+        <li><a href="#api-ctor">构造函数 &amp; 初始化</a></li>
+        <li><a href="#api-i2c">底层 I²C 操作</a></li>
+        <li><a href="#api-vbat">VBAT_SET — 电池充电配置</a></li>
+        <li><a href="#api-vbusref-i">VBUSREF_I — 内部 VBUS 参考电压</a></li>
+        <li><a href="#api-vbusref-e">VBUSREF_E — 外部 FB 参考电压</a></li>
+        <li><a href="#api-ibus-lim">IBUS_LIM — IBUS 电流限制</a></li>
+        <li><a href="#api-ibat-lim">IBAT_LIM — IBAT 电流限制</a></li>
+        <li><a href="#api-vinreg">VINREG — 动态电源管理</a></li>
+        <li><a href="#api-ratio">RATIO — 比率配置</a></li>
+        <li><a href="#api-ctrl0">CTRL0 — 充放电模式/频率/死区</a></li>
+        <li><a href="#api-ctrl1">CTRL1 — VBUS 方式/涓流/OVP</a></li>
+        <li><a href="#api-ctrl2">CTRL2 — 频率抖动/电压斜率</a></li>
+        <li><a href="#api-ctrl3">CTRL3 — ADC/PFM/保护/环路</a></li>
+        <li><a href="#api-status">STATUS — 中断状态</a></li>
+        <li><a href="#api-adc">ADC 读数</a></li>
+        <li><a href="#api-mask">MASK — 中断掩码</a></li>
+        <li><a href="#api-convenience">便捷高级函数</a></li>
+      </ul>
+    </li>
+    <li><a href="#examples">使用示例</a></li>
+    <li><a href="#notes">注意事项</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- 1. OVERVIEW -->
+<!-- ============================================================ -->
+<section id="overview">
+  <h2>1. 芯片概述</h2>
+  <p>SC8815 是 Southchip 出品的高效率同步双向 Buck-Boost 充电控制器，集成 NVDC 电源路径管理，支持：</p>
+  <ul style="margin: 10px 0 10px 24px;">
+    <li><strong>充电模式：</strong>涓流充电 → 恒流充电 (CC) → 恒压充电 (CV) → 充电终止</li>
+    <li><strong>放电模式 (OTG)：</strong>电池反向升/降压输出可调 VBUS 电压</li>
+    <li><strong>I²C 可编程：</strong>充电电流/电压、放电输出电压、输入/输出电流限制、开关频率</li>
+    <li><strong>10-bit ADC 监控：</strong>VBUS 电压 / VBAT 电压 / IBUS 电流 / IBAT 电流 / ADIN 外部电压</li>
+    <li><strong>完善保护：</strong>UVP 输入欠压、OVP 过压、OCP 过流、SCP 短路、OTP 过温 (165°C)</li>
+  </ul>
+
+  <h3>应用场景</h3>
+  <table>
+    <tr><th>场景</th><th>说明</th></tr>
+    <tr><td>笔记本 / 平板电池充电</td><td>1~4S 锂电池组，I²C 设置充电参数</td></tr>
+    <tr><td>移动电源 / 储能电站</td><td>双向充放电，OTG 输出可调电压</td></tr>
+    <tr><td>USB-C PD 充电器</td><td>配合 CC 控制器实现 PD 电压调节</td></tr>
+    <tr><td>工业电池管理系统 (BMS)</td><td>12V/24V 电池组的充放电管理</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<!-- 2. QUICK START -->
+<!-- ============================================================ -->
+<section id="quickstart">
+  <h2>2. 快速开始</h2>
+  <pre><code>#include &lt;Wire.h&gt;
+#include "sc8815.h"
+
+SC8815 sc;
+
+void setup() {
+    Serial.begin(115200);
+    Wire.begin(21, 22);        // ESP32: SDA=21, SCL=22
+    Wire.setClock(400000);     // 400kHz I²C
+
+    if (!sc.begin()) {
+        Serial.println("SC8815 未检测到!");
+        return;
+    }
+
+    // 配置充电: 3S 电池, 4.20V/节, IBUS=2A, IBAT=2A
+    sc.setChargeVoltage(3, SC8815_VCELL_4V20);
+    sc.setChargeCurrent(2000, 2000);
+    sc.setCTRL1(SC8815_ICHAR_SEL_IBUS,
+                SC8815_DIS_TRICKLE_ENABLE,
+                SC8815_DIS_TERM_ENABLE,
+                SC8815_FB_SEL_INTERNAL,
+                SC8815_TRICKLE_SET_70,
+                SC8815_DIS_OVP_DISABLE);
+}
+
+void loop() {
+    // 读取 VBUS / VBAT 电压和电流
+    uint16_t vbus, vbat, ibus, ibat;
+    sc.readVBUSVoltage(&vbus);
+    sc.readVBATVoltage(&vbat);
+    sc.readIBUSCurrent(&ibus);
+    sc.readIBATCurrent(&ibat);
+    Serial.printf("VBUS:%dmV, VBAT:%dmV, IBUS:%dmA, IBAT:%dmA\n",
+                  vbus, vbat, ibus, ibat);
+    delay(1000);
+}</code></pre>
+  <div class="note">
+    <strong>提示：</strong>调用 <code>begin()</code> 前必须自行初始化 I²C 总线（Wire.begin / Wire.setPins / Wire.setClock）。库不会自动重置 Wire 配置。
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 3. I2C -->
+<!-- ============================================================ -->
+<section id="i2c">
+  <h2>3. I²C 通信</h2>
+  <table>
+    <tr><th>参数</th><th>值</th></tr>
+    <tr><td>7-bit 地址</td><td><code>0x74</code></td></tr>
+    <tr><td>8-bit 写地址</td><td><code>0xE8</code> (0x74 &lt;&lt; 1)</td></tr>
+    <tr><td>8-bit 读地址</td><td><code>0xE9</code> (0x74 &lt;&lt; 1 | 1)</td></tr>
+    <tr><td>支持速率</td><td>100kHz (标准) / 400kHz (快速)</td></tr>
+    <tr><td>寄存器数量</td><td>26 个 (地址 0x00~0x1B，0x18 保留)</td></tr>
+  </table>
+  <div class="note info">
+    <strong>通信流程：</strong>写操作 → 发送 START + 设备地址/W + 寄存器地址 + 数据 + STOP；读操作 → 发送 START + 设备地址/W + 寄存器地址 + RESTART + 设备地址/R + 读数据 + STOP。
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 4. REGISTERS -->
+<!-- ============================================================ -->
+<section id="registers">
+  <h2>4. 寄存器映射</h2>
+  <table>
+    <tr><th>地址</th><th>寄存器名</th><th>访问</th><th>位宽</th><th>功能描述</th></tr>
+    <tr><td><code>0x00</code></td><td>VBAT_SET</td><td><span class="tag rw">RW</span></td><td>8</td><td>电池充电目标电压及配置 (IRCOMP / VBAT_SEL / CSEL / VCELL)</td></tr>
+    <tr><td><code>0x01</code></td><td>VBUSREF_I_SET</td><td><span class="tag rw">RW</span></td><td>8</td><td>内部 VBUS 参考电压高 8 位 [7:0]</td></tr>
+    <tr><td><code>0x02</code></td><td>VBUSREF_I_SET2</td><td><span class="tag rw">RW</span></td><td>2+6R</td><td>内部 VBUS 参考电压低 2 位 [9:8] + 保留位</td></tr>
+    <tr><td><code>0x03</code></td><td>VBUSREF_E_SET</td><td><span class="tag rw">RW</span></td><td>8</td><td>外部 FB 参考电压高 8 位 [7:0]</td></tr>
+    <tr><td><code>0x04</code></td><td>VBUSREF_E_SET2</td><td><span class="tag rw">RW</span></td><td>2+6R</td><td>外部 FB 参考电压低 2 位 [9:8] + 保留位</td></tr>
+    <tr><td><code>0x05</code></td><td>IBUS_LIM_SET</td><td><span class="tag rw">RW</span></td><td>8</td><td>IBUS 电流限制 (充/放电均生效)</td></tr>
+    <tr><td><code>0x06</code></td><td>IBAT_LIM_SET</td><td><span class="tag rw">RW</span></td><td>8</td><td>IBAT 电流限制 (充/放电均生效)</td></tr>
+    <tr><td><code>0x07</code></td><td>VINREG_SET</td><td><span class="tag rw">RW</span></td><td>8</td><td>VINREG 动态电源管理参考电压</td></tr>
+    <tr><td><code>0x08</code></td><td>RATIO</td><td><span class="tag rw">RW</span></td><td>5+3R</td><td>电流/电压比率配置 (含保留位)</td></tr>
+    <tr><td><code>0x09</code></td><td>CTRL0_SET</td><td><span class="tag rw">RW</span></td><td>6+2R</td><td>控制0：EN_OTG / VINREG_RATIO / FREQ / DT</td></tr>
+    <tr><td><code>0x0A</code></td><td>CTRL1_SET</td><td><span class="tag rw">RW</span></td><td>6+2R</td><td>控制1：FB_SEL / DIS_OVP / 充电选项</td></tr>
+    <tr><td><code>0x0B</code></td><td>CTRL2_SET</td><td><span class="tag rw">RW</span></td><td>4+4R</td><td>控制2：FACTORY / EN_DITHER / SLEW</td></tr>
+    <tr><td><code>0x0C</code></td><td>CTRL3_SET</td><td><span class="tag rw">RW</span></td><td>8</td><td>控制3：AD_START / EN_PFM / 保护配置</td></tr>
+    <tr><td><code>0x0D</code></td><td>VBUS_FB_VALUE</td><td><span class="tag ro">RO</span></td><td>8</td><td>VBUS ADC 值高 8 位</td></tr>
+    <tr><td><code>0x0E</code></td><td>VBUS_FB_VALUE2</td><td><span class="tag ro">RO</span></td><td>2+6R</td><td>VBUS ADC 值低 2 位 + 保留</td></tr>
+    <tr><td><code>0x0F</code></td><td>VBAT_FB_VALUE</td><td><span class="tag ro">RO</span></td><td>8</td><td>VBAT ADC 值高 8 位</td></tr>
+    <tr><td><code>0x10</code></td><td>VBAT_FB_VALUE2</td><td><span class="tag ro">RO</span></td><td>2+6R</td><td>VBAT ADC 值低 2 位 + 保留</td></tr>
+    <tr><td><code>0x11</code></td><td>IBUS_VALUE</td><td><span class="tag ro">RO</span></td><td>8</td><td>IBUS ADC 值高 8 位</td></tr>
+    <tr><td><code>0x12</code></td><td>IBUS_VALUE2</td><td><span class="tag ro">RO</span></td><td>2+6R</td><td>IBUS ADC 值低 2 位 + 保留</td></tr>
+    <tr><td><code>0x13</code></td><td>IBAT_VALUE</td><td><span class="tag ro">RO</span></td><td>8</td><td>IBAT ADC 值高 8 位</td></tr>
+    <tr><td><code>0x14</code></td><td>IBAT_VALUE2</td><td><span class="tag ro">RO</span></td><td>2+6R</td><td>IBAT ADC 值低 2 位 + 保留</td></tr>
+    <tr><td><code>0x15</code></td><td>ADIN_VALUE</td><td><span class="tag ro">RO</span></td><td>8</td><td>ADIN ADC 值高 8 位</td></tr>
+    <tr><td><code>0x16</code></td><td>ADIN_VALUE2</td><td><span class="tag ro">RO</span></td><td>2+6R</td><td>ADIN ADC 值低 2 位 + 保留</td></tr>
+    <tr><td><code>0x17</code></td><td>STATUS</td><td><span class="tag ro">RO</span></td><td>8</td><td>中断状态 (AC_OK / INDET / VBUS_SHORT / OTP / EOC)</td></tr>
+    <tr><td><code>0x19</code></td><td>MASK</td><td><span class="tag rw">RW</span></td><td>5+3R</td><td>中断掩码</td></tr>
+  </table>
+  <div class="note info">
+    <strong>地址缺口：</strong>0x18 为保留地址，不可访问。其余地址 0x00~0x1B 均有定义。
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 5. ENUMS -->
+<!-- ============================================================ -->
+<section id="enums">
+  <h2>5. 枚举类型定义</h2>
+
+  <!-- VBAT_SET -->
+  <h3 id="enum-ircomp">5.1 IRCOMP — 电池内阻补偿 <span class="tag reg">VBAT_SET[7:6]</span></h3>
+  <p>PSTOP=HIGH 时设置，用于补偿电池内阻引起的压降。</p>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_IRCOMP_0mOhm</code></td><td><code>00</code></td><td>补偿 0mΩ (默认)</td></tr>
+    <tr><td><code>SC8815_IRCOMP_20mOhm</code></td><td><code>01</code></td><td>补偿 20mΩ</td></tr>
+    <tr><td><code>SC8815_IRCOMP_40mOhm</code></td><td><code>10</code></td><td>补偿 40mΩ</td></tr>
+    <tr><td><code>SC8815_IRCOMP_80mOhm</code></td><td><code>11</code></td><td>补偿 80mΩ</td></tr>
+  </table>
+
+  <h3 id="enum-vbat-sel">5.2 VBAT_SEL — 电池电压设定方式 <span class="tag reg">VBAT_SET[5]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_VBAT_SEL_INTERNAL</code></td><td><code>0</code></td><td>内部设定 (通过 CSEL + VCELL_SET)</td></tr>
+    <tr><td><code>SC8815_VBAT_SEL_EXTERNAL</code></td><td><code>1</code></td><td>外部电阻分压设定 (VBATS 引脚)</td></tr>
+  </table>
+
+  <h3 id="enum-csel">5.3 CSEL — 电池串联节数 <span class="tag reg">VBAT_SET[4:3]</span></h3>
+  <p>仅在 <code>VBAT_SEL=INTERNAL</code> 时有效。</p>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>串数</th><th>总电压范围</th></tr>
+    <tr><td><code>SC8815_CSEL_1S</code></td><td><code>00</code></td><td>1S</td><td>~4.2V</td></tr>
+    <tr><td><code>SC8815_CSEL_2S</code></td><td><code>01</code></td><td>2S</td><td>~8.4V</td></tr>
+    <tr><td><code>SC8815_CSEL_3S</code></td><td><code>10</code></td><td>3S</td><td>~12.6V</td></tr>
+    <tr><td><code>SC8815_CSEL_4S</code></td><td><code>11</code></td><td>4S</td><td>~16.8V</td></tr>
+  </table>
+
+  <h3 id="enum-vcell">5.4 VCELL — 单节电池目标电压 <span class="tag reg">VBAT_SET[2:0]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>电压/节</th></tr>
+    <tr><td><code>SC8815_VCELL_4V10</code></td><td><code>000</code></td><td>4.10V</td></tr>
+    <tr><td><code>SC8815_VCELL_4V20</code></td><td><code>001</code></td><td>4.20V <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_VCELL_4V25</code></td><td><code>010</code></td><td>4.25V</td></tr>
+    <tr><td><code>SC8815_VCELL_4V30</code></td><td><code>011</code></td><td>4.30V</td></tr>
+    <tr><td><code>SC8815_VCELL_4V35</code></td><td><code>100</code></td><td>4.35V</td></tr>
+    <tr><td><code>SC8815_VCELL_4V40</code></td><td><code>101</code></td><td>4.40V</td></tr>
+    <tr><td><code>SC8815_VCELL_4V45</code></td><td><code>110</code></td><td>4.45V</td></tr>
+    <tr><td><code>SC8815_VCELL_4V50</code></td><td><code>111</code></td><td>4.50V</td></tr>
+  </table>
+
+  <!-- RATIO -->
+  <h3 id="enum-ibat-ratio">5.5 IBAT_RATIO — IBAT 电流比率 <span class="tag reg">RATIO[4]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>比率</th><th>最大电流范围</th></tr>
+    <tr><td><code>SC8815_IBAT_RATIO_6x</code></td><td><code>0</code></td><td>6×</td><td>较小</td></tr>
+    <tr><td><code>SC8815_IBAT_RATIO_12x</code></td><td><code>1</code></td><td>12×</td><td>较大 <em>(默认)</em></td></tr>
+  </table>
+
+  <h3 id="enum-ibus-ratio">5.6 IBUS_RATIO — IBUS 电流比率 <span class="tag reg">RATIO[3:2]</span></h3>
+  <div class="note danger"><strong>禁止值：</strong><code>00</code> 和 <code>11</code> 组合无效，数据手册明确禁止。</div>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>比率</th><th>最大电流范围</th></tr>
+    <tr><td><code>SC8815_IBUS_RATIO_3x</code></td><td><code>10</code></td><td>3×</td><td>~3A <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_IBUS_RATIO_6x</code></td><td><code>01</code></td><td>6×</td><td>~6A</td></tr>
+  </table>
+
+  <h3 id="enum-vbat-mon-ratio">5.7 VBAT_MON_RATIO — 电池电压监控比率 <span class="tag reg">RATIO[1]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>比率</th><th>最大可测</th><th>建议</th></tr>
+    <tr><td><code>SC8815_VBAT_MON_RATIO_12_5x</code></td><td><code>0</code></td><td>12.5×</td><td>~25.6V</td><td>默认</td></tr>
+    <tr><td><code>SC8815_VBAT_MON_RATIO_5x</code></td><td><code>1</code></td><td>5×</td><td>~10.24V</td><td>VBAT &lt; 10.24V 时使用</td></tr>
+  </table>
+
+  <h3 id="enum-vbus-ratio">5.8 VBUS_RATIO — VBUS 电压比率 <span class="tag reg">RATIO[0]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>比率</th><th>最大可测</th><th>步进</th></tr>
+    <tr><td><code>SC8815_VBUS_RATIO_12_5x</code></td><td><code>0</code></td><td>12.5×</td><td>~25.6V</td><td>25mV</td></tr>
+    <tr><td><code>SC8815_VBUS_RATIO_5x</code></td><td><code>1</code></td><td>5×</td><td>~10.24V</td><td>10mV</td></tr>
+  </table>
+
+  <!-- CTRL0 -->
+  <h3 id="enum-en-otg">5.9 EN_OTG — OTG 放电模式 <span class="tag reg">CTRL0[7]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_EN_OTG_DISABLE</code></td><td><code>0</code></td><td>充电模式</td></tr>
+    <tr><td><code>SC8815_EN_OTG_ENABLE</code></td><td><code>1</code></td><td>OTG 放电模式</td></tr>
+  </table>
+
+  <h3 id="enum-vinreg-ratio">5.10 VINREG_RATIO — VINREG 比率 <span class="tag reg">CTRL0[4]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>比率</th><th>步进</th><th>最大</th></tr>
+    <tr><td><code>SC8815_VINREG_RATIO_100x</code></td><td><code>0</code></td><td>100×</td><td>100mV</td><td>25.6V <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_VINREG_RATIO_40x</code></td><td><code>1</code></td><td>40×</td><td>40mV</td><td>10.24V</td></tr>
+  </table>
+
+  <h3 id="enum-freq">5.11 FREQ — 开关频率 <span class="tag reg">CTRL0[3:2]</span></h3>
+  <div class="note info"><code>01</code> 和 <code>10</code> 均对应 300kHz。</div>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>频率</th></tr>
+    <tr><td><code>SC8815_FREQ_150kHz</code></td><td><code>00</code></td><td>150kHz</td></tr>
+    <tr><td><code>SC8815_FREQ_300kHz</code></td><td><code>01</code> 或 <code>10</code></td><td>300kHz <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_FREQ_450kHz</code></td><td><code>11</code></td><td>450kHz</td></tr>
+  </table>
+
+  <h3 id="enum-dt">5.12 DT — 死区时间 <span class="tag reg">CTRL0[1:0]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>死区时间</th></tr>
+    <tr><td><code>SC8815_DT_20ns</code></td><td><code>00</code></td><td>20ns <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_DT_40ns</code></td><td><code>01</code></td><td>40ns</td></tr>
+    <tr><td><code>SC8815_DT_60ns</code></td><td><code>10</code></td><td>60ns</td></tr>
+    <tr><td><code>SC8815_DT_80ns</code></td><td><code>11</code></td><td>80ns</td></tr>
+  </table>
+
+  <!-- CTRL1 -->
+  <h3 id="enum-ichar-sel">5.13 ICHAR_SEL — 充电电流基准 <span class="tag reg">CTRL1[7]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_ICHAR_SEL_IBUS</code></td><td><code>0</code></td><td>充电电流由 IBUS 设定 <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_ICHAR_SEL_IBAT</code></td><td><code>1</code></td><td>充电电流由 IBAT 设定</td></tr>
+  </table>
+
+  <h3 id="enum-dis-trickle">5.14 DIS_TRICKLE — 涓流充电 <span class="tag reg">CTRL1[6]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_DIS_TRICKLE_ENABLE</code></td><td><code>0</code></td><td>启用涓流充电 <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_DIS_TRICKLE_DISABLE</code></td><td><code>1</code></td><td>禁用涓流充电</td></tr>
+  </table>
+
+  <h3 id="enum-dis-term">5.15 DIS_TERM — 自动充电终止 <span class="tag reg">CTRL1[5]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_DIS_TERM_ENABLE</code></td><td><code>0</code></td><td>启用自动终止 <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_DIS_TERM_DISABLE</code></td><td><code>1</code></td><td>禁用自动终止</td></tr>
+  </table>
+
+  <h3 id="enum-fb-sel">5.16 FB_SEL — VBUS 参考电压源 <span class="tag reg">CTRL1[4]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_FB_SEL_INTERNAL</code></td><td><code>0</code></td><td>内部 I²C 设定 VBUS <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_FB_SEL_EXTERNAL</code></td><td><code>1</code></td><td>外部 FB 电阻分压设定</td></tr>
+  </table>
+
+  <h3 id="enum-trickle-set">5.17 TRICKLE_SET — 涓流充电阈值 <span class="tag reg">CTRL1[3]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>阈值 (占 VBAT)</th></tr>
+    <tr><td><code>SC8815_TRICKLE_SET_70</code></td><td><code>0</code></td><td>70% VBAT <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_TRICKLE_SET_60</code></td><td><code>1</code></td><td>60% VBAT</td></tr>
+  </table>
+
+  <h3 id="enum-dis-ovp">5.18 DIS_OVP — 过压保护 <span class="tag reg">CTRL1[2]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_DIS_OVP_ENABLE</code></td><td><code>0</code></td><td><strong>注意：</strong>启用过压保护 <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_DIS_OVP_DISABLE</code></td><td><code>1</code></td><td><strong>注意：</strong>禁用过压保护</td></tr>
+  </table>
+  <div class="note warn">
+    <strong>命名约定：</strong><code>DIS_OVP_ENABLE</code> = 位值 0 = <strong>启用</strong> OVP 保护。枚举名称中的 DIS 表示"disable"位，ENABLE/DISABLE 描述的是该位的状态，不是保护功能本身。写 <code>SC8815_DIS_OVP_ENABLE</code> (0) = OVP 保护开启；写 <code>SC8815_DIS_OVP_DISABLE</code> (1) = OVP 保护关闭。
+  </div>
+
+  <!-- CTRL2 -->
+  <h3 id="enum-factory">5.19 FACTORY — 工厂配置位 <span class="tag reg">CTRL2[3]</span></h3>
+  <div class="note danger"><strong>强制要求：</strong>数据手册明确要求 MCU 上电后必须将此位写为 1。库默认已设置。</div>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_FACTORY_DEFAULT</code></td><td><code>0</code></td><td>默认值 (不推荐)</td></tr>
+    <tr><td><code>SC8815_FACTORY_POWERUP</code></td><td><code>1</code></td><td>上电后必须写为 1 <strong>(强制)</strong></td></tr>
+  </table>
+
+  <h3 id="enum-en-dither">5.20 EN_DITHER — 扩频抖动 <span class="tag reg">CTRL2[2]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_EN_DITHER_DISABLE</code></td><td><code>0</code></td><td>禁用扩频 <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_EN_DITHER_ENABLE</code></td><td><code>1</code></td><td>启用扩频 (改善 EMI, 禁用 PGATE 功能)</td></tr>
+  </table>
+
+  <h3 id="enum-slew">5.21 SLEW — VBUS 电压变化斜率 <span class="tag reg">CTRL2[1:0]</span></h3>
+  <p>仅放电模式生效。</p>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>斜率</th></tr>
+    <tr><td><code>SC8815_SLEW_SET_1mV_us</code></td><td><code>00</code></td><td>1 mV/µs</td></tr>
+    <tr><td><code>SC8815_SLEW_SET_2mV_us</code></td><td><code>01</code></td><td>2 mV/µs <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_SLEW_SET_4mV_us</code></td><td><code>10</code></td><td>4 mV/µs</td></tr>
+    <tr><td><code>SC8815_SLEW_SET_8mV_us</code></td><td><code>11</code></td><td>8 mV/µs</td></tr>
+  </table>
+
+  <!-- CTRL3 -->
+  <h3 id="enum-en-pgate">5.22 EN_PGATE — PGATE 引脚 <span class="tag reg">CTRL3[7]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_EN_PGATE_OFF</code></td><td><code>0</code></td><td>PGATE 高电平，关断外部 PMOS <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_EN_PGATE_ON</code></td><td><code>1</code></td><td>PGATE 低电平，导通外部 PMOS</td></tr>
+  </table>
+
+  <h3 id="enum-gpo-ctrl">5.23 GPO_CTRL — GPO 引脚 <span class="tag reg">CTRL3[6]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_GPO_CTRL_OD</code></td><td><code>0</code></td><td>开漏输出，需外部上拉 <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_GPO_CTRL_LO</code></td><td><code>1</code></td><td>内部下拉输出低电平</td></tr>
+  </table>
+
+  <h3 id="enum-ad-start">5.24 AD_START — ADC 转换 <span class="tag reg">CTRL3[5]</span></h3>
+  <div class="note info"><strong>重要：</strong>读取任何 ADC 值之前必须先设置 <code>SC8815_AD_START_ENABLE</code>。</div>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_AD_START_DISABLE</code></td><td><code>0</code></td><td>停止 ADC <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_AD_START_ENABLE</code></td><td><code>1</code></td><td>启动 ADC 转换</td></tr>
+  </table>
+
+  <h3 id="enum-ilim-bw">5.25 ILIM_BW — 电流限制环路带宽 <span class="tag reg">CTRL3[4]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>带宽</th></tr>
+    <tr><td><code>SC8815_ILIM_BW_SEL_5K</code></td><td><code>0</code></td><td>5kHz <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_ILIM_BW_SEL_1_25K</code></td><td><code>1</code></td><td>1.25kHz</td></tr>
+  </table>
+
+  <h3 id="enum-loop-set">5.26 LOOP_SET — 环路响应 <span class="tag reg">CTRL3[3]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_LOOP_SET_NORMAL</code></td><td><code>0</code></td><td>正常响应 <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_LOOP_SET_IMPROVE</code></td><td><code>1</code></td><td>改善环路响应</td></tr>
+  </table>
+
+  <h3 id="enum-dis-short-foldback">5.27 DIS_ShortFoldBack — 短路电流折返 <span class="tag reg">CTRL3[2]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_DIS_SHORT_FOLDBACK_ENABLE</code></td><td><code>0</code></td><td>启用短路电流折返 <em>(默认)</em> — VBUS&lt;1V 时电流折返至 22%(IBUS)/10%(IBAT)</td></tr>
+    <tr><td><code>SC8815_DIS_SHORT_FOLDBACK_DISABLE</code></td><td><code>1</code></td><td>禁用短路电流折返保护</td></tr>
+  </table>
+
+  <h3 id="enum-eoc">5.28 EOC — 充电终止电流阈值 <span class="tag reg">CTRL3[1]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>终止阈值</th></tr>
+    <tr><td><code>SC8815_EOC_SET_1_25</code></td><td><code>0</code></td><td>充电电流的 1/25</td></tr>
+    <tr><td><code>SC8815_EOC_SET_1_10</code></td><td><code>1</code></td><td>充电电流的 1/10 <em>(默认)</em></td></tr>
+  </table>
+
+  <h3 id="enum-en-pfm">5.29 EN_PFM — PFM 模式 <span class="tag reg">CTRL3[0]</span></h3>
+  <table>
+    <tr><th>枚举值</th><th>位值</th><th>说明</th></tr>
+    <tr><td><code>SC8815_EN_PFM_DISABLE</code></td><td><code>0</code></td><td>强制 PWM 模式 (低纹波) <em>(默认)</em></td></tr>
+    <tr><td><code>SC8815_EN_PFM_ENABLE</code></td><td><code>1</code></td><td>启用 PFM 模式 (轻载高效)</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<!-- 6. API -->
+<!-- ============================================================ -->
+<section id="api">
+  <h2>6. 类 API 参考</h2>
+
+  <!-- 构造函数 -->
+  <h3 id="api-ctor">6.1 构造函数 &amp; 初始化</h3>
+
+  <div class="method">
+    <div class="mhead">构造函数</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">SC8815</span>::<span class="fn">SC8815</span>(uint8_t i2c_addr = 0x74, TwoWire *wire = &amp;Wire);</div>
+      <p>创建 SC8815 实例。<code>i2c_addr</code> 为 7-bit I²C 设备地址，<code>wire</code> 为使用的 I²C 总线指针。仅保存参数，不执行任何 I/O 操作。</p>
+    </div>
+  </div>
+
+  <div class="method">
+    <div class="mhead">析构函数</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">SC8815</span>::~<span class="fn">SC8815</span>();</div>
+      <p>默认析构，无特殊清理。</p>
+    </div>
+  </div>
+
+  <div class="method">
+    <div class="mhead">begin — 设备检测</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">begin</span>();</div>
+      <p>检测 I²C 总线上是否存在 SC8815 设备（发送地址 + 检查 ACK）。</p>
+      <p><strong>返回：</strong><code>true</code> = 设备响应 ACK；<code>false</code> = 通信失败。</p>
+      <div class="note warn"><strong>警告：</strong>不会调用 Wire.begin()。调用前必须已自行初始化 Wire。</div>
+    </div>
+  </div>
+
+  <!-- 底层 I2C -->
+  <h3 id="api-i2c">6.2 底层 I²C 操作</h3>
+  <div class="method">
+    <div class="mhead">writeRegister — 写单字节</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">writeRegister</span>(uint8_t reg, uint8_t value);</div>
+      <p>写单字节到指定寄存器。返回 <code>true</code> 表示写入成功（收到 ACK）。</p>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead">readRegister — 读单字节</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">readRegister</span>(uint8_t reg, uint8_t *value);</div>
+      <p>从指定寄存器读单字节。<code>value</code> 输出读取值。返回 <code>true</code> 表示读取成功。</p>
+    </div>
+  </div>
+
+  <!-- VBAT_SET -->
+  <h3 id="api-vbat">6.3 VBAT_SET — 电池充电配置</h3>
+  <div class="method">
+    <div class="mhead"><span class="tag reg">0x00</span> <span class="tag rw">RW</span> setVBATSet</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setVBATSet</span>(SC8815_IRCOMP_t ircomp, SC8815_VBAT_SEL_t sel,
+                    SC8815_CSEL_t csel, SC8815_VCELL_t vcell);</div>
+      <p>设置电池充电目标电压及相关配置。</p>
+      <table>
+        <tr><th>参数</th><th>说明</th></tr>
+        <tr><td><code>ircomp</code></td><td>电池内阻补偿 (<a href="#enum-ircomp">IRCOMP</a>)</td></tr>
+        <tr><td><code>sel</code></td><td>VBAT 设定方式 (<a href="#enum-vbat-sel">VBAT_SEL</a>)</td></tr>
+        <tr><td><code>csel</code></td><td>电池串联节数 (<a href="#enum-csel">CSEL</a>)，仅 sel=INTERNAL 有效</td></tr>
+        <tr><td><code>vcell</code></td><td>单节目标电压 (<a href="#enum-vcell">VCELL</a>)，仅 sel=INTERNAL 有效</td></tr>
+      </table>
+      <p><strong>位布局：</strong></p>
+      <div class="bit-row">
+        <span class="bit-cell b7">7</span><span>IRCOMP[1]</span>
+        <span class="bit-cell b6">6</span><span>IRCOMP[0]</span>
+        <span class="bit-cell b5">5</span><span>VBAT_SEL</span>
+        <span class="bit-cell b4">4</span><span>CSEL[1]</span>
+        <span class="bit-cell b3">3</span><span>CSEL[0]</span>
+        <span class="bit-cell b2">2</span><span>VCELL[2]</span>
+        <span class="bit-cell b1">1</span><span>VCELL[1]</span>
+        <span class="bit-cell b0">0</span><span>VCELL[0]</span>
+      </div>
+      <div class="note">在放电模式下此寄存器配置不影响输出，但仍建议正确设置。</div>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag reg">0x00</span> <span class="tag rw">RW</span> getVBATSet</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getVBATSet</span>(uint8_t *reg_value);</div>
+      <p>读取 VBAT_SET 寄存器原始值。</p>
+    </div>
+  </div>
+
+  <!-- VBUSREF_I -->
+  <h3 id="api-vbusref-i">6.4 VBUSREF_I — 内部 VBUS 参考电压 <span class="tag reg">0x01+0x02</span></h3>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> setVBUSRefI</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setVBUSRefI</span>(uint16_t ref_mV);</div>
+      <p>设置内部 VBUS 参考电压 (10-bit)。</p>
+      <p><strong>范围：</strong>2~2048 mV。</p>
+      <p><strong>公式：</strong><code>VBUSREF_I = (4 × VHI + VLO + 1) × 2mV</code></p>
+      <p><strong>输出：</strong><code>VBUS = VBUSREF_I × VBUS_RATIO</code></p>
+      <div class="note warn">仅在 FB_SEL=0 (内部设定) 时生效。写入前请确认 CTRL1 的 FB_SEL=0。</div>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> getVBUSRefI</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getVBUSRefI</span>(uint16_t *ref_mV);</div>
+      <p>读取当前内部 VBUS 参考电压 (mV)。</p>
+    </div>
+  </div>
+
+  <!-- VBUSREF_E -->
+  <h3 id="api-vbusref-e">6.5 VBUSREF_E — 外部 FB 参考电压 <span class="tag reg">0x03+0x04</span></h3>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> setVBUSRefE</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setVBUSRefE</span>(uint16_t ref_mV);</div>
+      <p>设置外部 FB 引脚参考电压 (10-bit)。</p>
+      <p><strong>推荐范围：</strong>0.5V ~ 2.048V。</p>
+      <p><strong>输出：</strong><code>VBUS = VBUSREF_E × (1 + RUP / RDOWN)</code></p>
+      <div class="note warn">仅在 FB_SEL=1 (外部电阻设定) 时生效。FB_SEL=1 时仍需配置 VBUS_RATIO（仅影响 ADC 监控量程）。</div>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> getVBUSRefE</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getVBUSRefE</span>(uint16_t *ref_mV);</div>
+      <p>读取当前外部 FB 参考电压 (mV)。</p>
+    </div>
+  </div>
+
+  <!-- IBUS_LIM -->
+  <h3 id="api-ibus-lim">6.6 IBUS_LIM — IBUS 电流限制 <span class="tag reg">0x05</span></h3>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> setIBUSLimit</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setIBUSLimit</span>(uint16_t current_mA);</div>
+      <p>设置 IBUS 电流限制（充/放电模式均生效）。</p>
+      <p><strong>公式：</strong><code>IBUS_LIM(A) = (IBUS_LIM_SET + 1) / 256 × IBUS_RATIO × 10mΩ / RS1</code></p>
+      <p>自动读取当前 IBUS_RATIO 和 RS1=10mΩ 计算寄存器值。</p>
+      <div class="note warn">实际限流精度取决于采样电阻温度系数。最小值不低于 0.3A（数据手册要求）。</div>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> getIBUSLimit</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getIBUSLimit</span>(uint16_t *current_mA);</div>
+      <p>读取当前 IBUS 电流限制 (mA)。</p>
+    </div>
+  </div>
+
+  <!-- IBAT_LIM -->
+  <h3 id="api-ibat-lim">6.7 IBAT_LIM — IBAT 电流限制 <span class="tag reg">0x06</span></h3>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> setIBATLimit</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setIBATLimit</span>(uint16_t current_mA);</div>
+      <p>设置 IBAT 电流限制（充/放电模式均生效）。</p>
+      <p><strong>公式：</strong><code>IBAT_LIM(A) = (IBAT_LIM_SET + 1) / 256 × IBAT_RATIO × 10mΩ / RS2</code></p>
+      <div class="note warn">最小值不低于 0.3A（数据手册要求）。</div>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> getIBATLimit</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getIBATLimit</span>(uint16_t *current_mA);</div>
+      <p>读取当前 IBAT 电流限制 (mA)。</p>
+    </div>
+  </div>
+
+  <!-- VINREG -->
+  <h3 id="api-vinreg">6.8 VINREG — 动态电源管理 <span class="tag reg">0x07</span></h3>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> setVINREG</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setVINREG</span>(uint16_t voltage_mV);</div>
+      <p>设置 VINREG 参考电压（充电模式动态电源管理）。</p>
+      <p><strong>公式：</strong><code>VINREG = (VINREG_SET + 1) × VINREG_RATIO (mV)</code></p>
+      <p>自动读取 CTRL0 中的 VINREG_RATIO 位确定步进值 (40mV 或 100mV)。</p>
+      <p>当 VBUS 电压降至 VINREG 时，自动减小充电电流以保护适配器。</p>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> getVINREG</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getVINREG</span>(uint16_t *voltage_mV);</div>
+      <p>读取当前 VINREG 设定值 (mV)。</p>
+    </div>
+  </div>
+
+  <!-- RATIO -->
+  <h3 id="api-ratio">6.9 RATIO — 比率配置 <span class="tag reg">0x08</span></h3>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> setRatio</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setRatio</span>(SC8815_IBUS_RATIO_t ibus_ratio, SC8815_IBAT_RATIO_t ibat_ratio,
+              SC8815_VBUS_RATIO_t vbus_ratio, SC8815_VBAT_MON_RATIO_t vbat_mon_ratio);</div>
+      <p>设置电流/电压比率。采用 read-modify-write 保护保留位。</p>
+      <table>
+        <tr><th>参数</th><th>说明</th><th>建议</th></tr>
+        <tr><td><code>ibus_ratio</code></td><td><a href="#enum-ibus-ratio">IBUS_RATIO</a></td><td>00 和 11 禁止</td></tr>
+        <tr><td><code>ibat_ratio</code></td><td><a href="#enum-ibat-ratio">IBAT_RATIO</a></td><td>—</td></tr>
+        <tr><td><code>vbus_ratio</code></td><td><a href="#enum-vbus-ratio">VBUS_RATIO</a></td><td>VBUS &lt; 10.24V → 5x; ≥ 10.24V → 12.5x</td></tr>
+        <tr><td><code>vbat_mon_ratio</code></td><td><a href="#enum-vbat-mon-ratio">VBAT_MON_RATIO</a></td><td>VBAT &lt; 10.24V → 5x</td></tr>
+      </table>
+      <p><strong>位布局：</strong></p>
+      <div class="bit-row">
+        <span class="bit-cell res">7</span><span>Reserved</span>
+        <span class="bit-cell res">6</span><span>Reserved</span>
+        <span class="bit-cell res">5</span><span>Reserved</span>
+        <span class="bit-cell b4">4</span><span>IBAT_RATIO</span>
+        <span class="bit-cell b3">3</span><span>IBUS_RATIO[1]</span>
+        <span class="bit-cell b2">2</span><span>IBUS_RATIO[0]</span>
+        <span class="bit-cell b1">1</span><span>VBAT_MON_RATIO</span>
+        <span class="bit-cell b0">0</span><span>VBUS_RATIO</span>
+      </div>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> getRatio</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getRatio</span>(uint8_t *reg_value);</div>
+      <p>读取 RATIO 寄存器原始值。</p>
+    </div>
+  </div>
+
+  <!-- CTRL0 -->
+  <h3 id="api-ctrl0">6.10 CTRL0 — 充放电模式 / 频率 / 死区 <span class="tag reg">0x09</span></h3>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> setCTRL0</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setCTRL0</span>(SC8815_EN_OTG_t en_otg, SC8815_VINREG_RATIO_t vinreg_ratio,
+              SC8815_FREQ_t freq, SC8815_DT_t dt);</div>
+      <p>设置充放电模式、开关频率和死区时间。采用 read-modify-write 保护保留位。</p>
+      <p><strong>位布局：</strong></p>
+      <div class="bit-row">
+        <span class="bit-cell b7">7</span><span>EN_OTG</span>
+        <span class="bit-cell res">6</span><span>Reserved</span>
+        <span class="bit-cell res">5</span><span>Reserved</span>
+        <span class="bit-cell b4">4</span><span>VINREG_RATIO</span>
+        <span class="bit-cell b3">3</span><span>FREQ[1]</span>
+        <span class="bit-cell b2">2</span><span>FREQ[0]</span>
+        <span class="bit-cell b1">1</span><span>DT[1]</span>
+        <span class="bit-cell b0">0</span><span>DT[0]</span>
+      </div>
+      <div class="note warn">仅在 PSTOP=H (待机) 时修改此寄存器。FREQ_SET 值 01 和 10 均为 300kHz。</div>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> getCTRL0</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getCTRL0</span>(uint8_t *reg_value);</div>
+      <p>读取 CTRL0_SET 寄存器原始值。</p>
+    </div>
+  </div>
+
+  <!-- CTRL1 -->
+  <h3 id="api-ctrl1">6.11 CTRL1 — VBUS 方式 / 涓流 / OVP <span class="tag reg">0x0A</span></h3>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> setCTRL1</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setCTRL1</span>(SC8815_ICHAR_SEL_t ichar_sel, SC8815_DIS_TRICKLE_t dis_trickle,
+              SC8815_DIS_TERM_t dis_term, SC8815_FB_SEL_t fb_sel,
+              SC8815_TRICKLE_SET_t trickle_set, SC8815_DIS_OVP_t dis_ovp);</div>
+      <p>设置充电控制选项及 VBUS 电压设定方式。采用 read-modify-write 保护保留位。</p>
+      <table>
+        <tr><th>参数</th><th>说明</th></tr>
+        <tr><td><code>ichar_sel</code></td><td><a href="#enum-ichar-sel">ICHAR_SEL</a> — 充电电流基准</td></tr>
+        <tr><td><code>dis_trickle</code></td><td><a href="#enum-dis-trickle">DIS_TRICKLE</a> — 涓流充电控制</td></tr>
+        <tr><td><code>dis_term</code></td><td><a href="#enum-dis-term">DIS_TERM</a> — 自动终止控制</td></tr>
+        <tr><td><code>fb_sel</code></td><td><a href="#enum-fb-sel">FB_SEL</a> — VBUS 电压设定方式</td></tr>
+        <tr><td><code>trickle_set</code></td><td><a href="#enum-trickle-set">TRICKLE_SET</a> — 涓流阈值 (70%/60%)</td></tr>
+        <tr><td><code>dis_ovp</code></td><td><a href="#enum-dis-ovp">DIS_OVP</a> — OVP 保护控制</td></tr>
+      </table>
+      <p><strong>位布局：</strong></p>
+      <div class="bit-row">
+        <span class="bit-cell b7">7</span><span>ICHAR_SEL</span>
+        <span class="bit-cell b6">6</span><span>DIS_TRICKLE</span>
+        <span class="bit-cell b5">5</span><span>DIS_TERM</span>
+        <span class="bit-cell b4">4</span><span>FB_SEL</span>
+        <span class="bit-cell b3">3</span><span>TRICKLE_SET</span>
+        <span class="bit-cell b2">2</span><span>DIS_OVP</span>
+        <span class="bit-cell res">1</span><span>Reserved</span>
+        <span class="bit-cell res">0</span><span>Reserved</span>
+      </div>
+      <div class="note info">放电模式通常设置：<code>fb_sel=EXTERNAL</code>，<code>dis_ovp=ENABLE</code>。</div>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> getCTRL1</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getCTRL1</span>(uint8_t *reg_value);</div>
+      <p>读取 CTRL1_SET 寄存器原始值。</p>
+    </div>
+  </div>
+
+  <!-- CTRL2 -->
+  <h3 id="api-ctrl2">6.12 CTRL2 — 频率抖动 / 电压斜率 <span class="tag reg">0x0B</span></h3>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> setCTRL2</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setCTRL2</span>(SC8815_EN_DITHER_t en_dither, SC8815_SLEW_t slew,
+              SC8815_FACTORY_t factory_bit = SC8815_FACTORY_POWERUP);</div>
+      <p>设置频率抖动和 VBUS 电压变化斜率。采用 read-modify-write 保护保留位。</p>
+      <table>
+        <tr><th>参数</th><th>说明</th></tr>
+        <tr><td><code>en_dither</code></td><td><a href="#enum-en-dither">EN_DITHER</a> — 扩频抖动 (改善 EMI)</td></tr>
+        <tr><td><code>slew</code></td><td><a href="#enum-slew">SLEW</a> — VBUS 电压变化斜率 (仅放电)</td></tr>
+        <tr><td><code>factory_bit</code></td><td><a href="#enum-factory">FACTORY</a> — 默认 <code>SC8815_FACTORY_POWERUP</code> (强制=1)</td></tr>
+      </table>
+      <p><strong>位布局：</strong></p>
+      <div class="bit-row">
+        <span class="bit-cell res">7</span><span>Reserved</span>
+        <span class="bit-cell res">6</span><span>Reserved</span>
+        <span class="bit-cell res">5</span><span>Reserved</span>
+        <span class="bit-cell res">4</span><span>Reserved</span>
+        <span class="bit-cell b3">3</span><span>FACTORY</span>
+        <span class="bit-cell b2">2</span><span>EN_DITHER</span>
+        <span class="bit-cell b1">1</span><span>SLEW[1]</span>
+        <span class="bit-cell b0">0</span><span>SLEW[0]</span>
+      </div>
+      <div class="note info">EN_DITHER=1 时 PGATE 引脚功能禁用，改为频率抖动控制。频率抖动范围约 ±5%，抖动周期由 PGATE/DITHER 引脚电容决定。</div>
+      <div class="note danger">数据手册明确要求：MCU 上电后应将 FACTORY bit 置 1。默认参数已满足。</div>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> getCTRL2</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getCTRL2</span>(uint8_t *reg_value);</div>
+      <p>读取 CTRL2_SET 寄存器原始值。</p>
+    </div>
+  </div>
+
+  <!-- CTRL3 -->
+  <h3 id="api-ctrl3">6.13 CTRL3 — ADC / PFM / 保护 / 环路 <span class="tag reg">0x0C</span></h3>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> setCTRL3</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setCTRL3</span>(SC8815_EN_PGATE_t en_pgate, SC8815_GPO_CTRL_t gpo_ctrl,
+              SC8815_AD_START_t ad_start, SC8815_ILIM_BW_SEL_t ilim_bw,
+              SC8815_LOOP_SET_t loop_set,
+              SC8815_DIS_SHORT_FOLDBACK_t dis_short_foldback,
+              SC8815_EOC_t eoc_set, SC8815_EN_PFM_t en_pfm);</div>
+      <p>设置 ADC 转换控制、保护功能、环路参数。此寄存器无保留位，所有 8 位均可直接写入。</p>
+      <table>
+        <tr><th>参数</th><th>说明</th></tr>
+        <tr><td><code>en_pgate</code></td><td><a href="#enum-en-pgate">EN_PGATE</a> — PGATE 引脚控制</td></tr>
+        <tr><td><code>gpo_ctrl</code></td><td><a href="#enum-gpo-ctrl">GPO_CTRL</a> — GPO 引脚控制</td></tr>
+        <tr><td><code>ad_start</code></td><td><a href="#enum-ad-start">AD_START</a> — <strong>读 ADC 前必须设为 ENABLE</strong></td></tr>
+        <tr><td><code>ilim_bw</code></td><td><a href="#enum-ilim-bw">ILIM_BW</a> — 限流环路带宽</td></tr>
+        <tr><td><code>loop_set</code></td><td><a href="#enum-loop-set">LOOP_SET</a> — 环路响应控制</td></tr>
+        <tr><td><code>dis_short_foldback</code></td><td><a href="#enum-dis-short-foldback">DIS_ShortFoldBack</a> — 短路电流折返</td></tr>
+        <tr><td><code>eoc_set</code></td><td><a href="#enum-eoc">EOC</a> — 充电终止电流阈值</td></tr>
+        <tr><td><code>en_pfm</code></td><td><a href="#enum-en-pfm">EN_PFM</a> — PFM 模式</td></tr>
+      </table>
+      <p><strong>位布局：</strong></p>
+      <div class="bit-row">
+        <span class="bit-cell b7">7</span><span>EN_PGATE</span>
+        <span class="bit-cell b6">6</span><span>GPO_CTRL</span>
+        <span class="bit-cell b5">5</span><span>AD_START</span>
+        <span class="bit-cell b4">4</span><span>ILIM_BW_SEL</span>
+        <span class="bit-cell b3">3</span><span>LOOP_SET</span>
+        <span class="bit-cell b2">2</span><span>DIS_ShortFoldBack</span>
+        <span class="bit-cell b1">1</span><span>EOC_SET</span>
+        <span class="bit-cell b0">0</span><span>EN_PFM</span>
+      </div>
+      <div class="note info">短路折返：启用时 VBUS &lt; 1V 电流折返至 22% (IBUS) / 10% (IBAT)。放电模式低纹波应用建议 <code>en_pfm=DISABLE</code> (强制 PWM)。</div>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> getCTRL3</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getCTRL3</span>(uint8_t *reg_value);</div>
+      <p>读取 CTRL3_SET 寄存器原始值。</p>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <h3 id="api-status">6.14 STATUS — 中断状态 <span class="tag reg">0x17</span> <span class="tag ro">RO</span></h3>
+  <div class="method">
+    <div class="mhead">getStatus</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getStatus</span>(uint8_t *status);</div>
+      <p>读取 STATUS 寄存器原始值。</p>
+    </div>
+  </div>
+  <p><strong>STATUS 位布局：</strong></p>
+  <table>
+    <tr><th>位</th><th>名称</th><th>方法</th><th>说明</th></tr>
+    <tr><td>6</td><td>AC_OK</td><td><code>isACOK()</code></td><td>适配器插入检测 (ACIN 引脚 &gt; 3V)</td></tr>
+    <tr><td>5</td><td>INDET</td><td><code>isINDET()</code></td><td>负载插入检测 (INDET 引脚)</td></tr>
+    <tr><td>3</td><td>VBUS_SHORT</td><td><code>isVBUSShort()</code></td><td>VBUS 短路检测 (VBUS &lt; 1V)</td></tr>
+    <tr><td>2</td><td>OTP</td><td><code>isOTP()</code></td><td>过温保护 (Tj &gt; 165°C)</td></tr>
+    <tr><td>1</td><td>EOC</td><td><code>isEOC()</code></td><td>充电终止</td></tr>
+  </table>
+  <p>每个状态位都有对应的便捷方法，返回 <code>bool</code>：</p>
+  <div class="sig"><span class="rt">bool</span> <span class="fn">isACOK</span>();</div>
+  <div class="sig"><span class="rt">bool</span> <span class="fn">isINDET</span>();</div>
+  <div class="sig"><span class="rt">bool</span> <span class="fn">isVBUSShort</span>();</div>
+  <div class="sig"><span class="rt">bool</span> <span class="fn">isOTP</span>();</div>
+  <div class="sig"><span class="rt">bool</span> <span class="fn">isEOC</span>();</div>
+
+  <!-- ADC -->
+  <h3 id="api-adc">6.15 ADC 读数 <span class="tag reg">0x0D~0x16</span> <span class="tag ro">RO</span></h3>
+  <div class="note info"><strong>前提条件：</strong>所有 ADC 读取函数均需先设置 <code>ad_start=SC8815_AD_START_ENABLE</code> (通过 setCTRL3)。</div>
+
+  <div class="method">
+    <div class="mhead">readVBUSVoltage</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">readVBUSVoltage</span>(uint16_t *voltage_mV);</div>
+      <p>读取 VBUS 电压 (mV)。</p>
+      <p><strong>公式：</strong><code>VBUS = (4 × VHI + VLO + 1) × VBUS_RATIO × 2mV</code></p>
+      <p>自动读取 RATIO 确定当前 VBUS_RATIO。VBUS_RATIO=12.5x 时步进 25mV，5x 时步进 10mV。</p>
+    </div>
+  </div>
+
+  <div class="method">
+    <div class="mhead">readVBATVoltage</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">readVBATVoltage</span>(uint16_t *voltage_mV);</div>
+      <p>读取 VBAT 电池电压 (mV)。</p>
+      <p><strong>公式：</strong><code>VBAT = (4 × VHI + VLO + 1) × VBAT_MON_RATIO × 2mV</code></p>
+    </div>
+  </div>
+
+  <div class="method">
+    <div class="mhead">readIBUSCurrent</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">readIBUSCurrent</span>(uint16_t *current_mA);</div>
+      <p>读取 IBUS 电流 (mA)。默认 RS1=10mΩ。</p>
+      <p><strong>公式：</strong><code>IBUS = raw × 2mV × IBUS_RATIO × 10mΩ / (1200 × RS1)</code></p>
+    </div>
+  </div>
+
+  <div class="method">
+    <div class="mhead">readIBATCurrent</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">readIBATCurrent</span>(uint16_t *current_mA);</div>
+      <p>读取 IBAT 电流 (mA)。默认 RS2=10mΩ。</p>
+      <p><strong>公式：</strong><code>IBAT = raw × 2mV × IBAT_RATIO × 10mΩ / (1200 × RS2)</code></p>
+    </div>
+  </div>
+
+  <div class="method">
+    <div class="mhead">readADINVoltage</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">readADINVoltage</span>(uint16_t *voltage_mV);</div>
+      <p>读取 ADIN 引脚电压 (mV)。范围 0~2048 mV，分辨率 2mV/步。</p>
+    </div>
+  </div>
+
+  <!-- MASK -->
+  <h3 id="api-mask">6.16 MASK — 中断掩码 <span class="tag reg">0x19</span></h3>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> setMask</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setMask</span>(bool ac_ok_mask, bool indet_mask, bool vbus_short_mask,
+          bool otp_mask, bool eoc_mask);</div>
+      <p>设置中断掩码。<code>true</code> = 屏蔽该中断。采用 read-modify-write 保护保留位。</p>
+      <p><strong>位布局：</strong></p>
+      <div class="bit-row">
+        <span class="bit-cell res">7</span><span>Reserved</span>
+        <span class="bit-cell b6">6</span><span>AC_OK_Mask</span>
+        <span class="bit-cell b5">5</span><span>INDET_Mask</span>
+        <span class="bit-cell res">4</span><span>Reserved</span>
+        <span class="bit-cell b3">3</span><span>VBUS_SHORT_Mask</span>
+        <span class="bit-cell b2">2</span><span>OTP_Mask</span>
+        <span class="bit-cell b1">1</span><span>EOC_Mask</span>
+        <span class="bit-cell res">0</span><span>Reserved*</span>
+      </div>
+      <div class="note info">bit[0] 强制写 1（数据手册要求上电后写 1）。</div>
+    </div>
+  </div>
+  <div class="method">
+    <div class="mhead"><span class="tag rw">RW</span> getMask</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">getMask</span>(uint8_t *mask);</div>
+      <p>读取 MASK 寄存器原始值。</p>
+    </div>
+  </div>
+
+  <!-- Convenience -->
+  <h3 id="api-convenience">6.17 便捷高级函数</h3>
+  <div class="method">
+    <div class="mhead">setChargeVoltage — 设置充电目标电压</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setChargeVoltage</span>(uint8_t cell_count, SC8815_VCELL_t vcell_per_cell);</div>
+      <p>便捷设置充电目标电压（内部设定方式）。自动设置 VBAT_SEL=INTERNAL，IRCOMP=0mΩ。</p>
+      <p><code>cell_count</code> 范围 1~4，对应电池串联节数。</p>
+    </div>
+  </div>
+
+  <div class="method">
+    <div class="mhead">setChargeCurrent — 设置充电电流限制</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">setChargeCurrent</span>(uint16_t ibus_limit_mA, uint16_t ibat_limit_mA);</div>
+      <p>便捷设置充电电流限制。同时写入 IBUS 和 IBAT 两个电流限制寄存器。</p>
+    </div>
+  </div>
+
+  <div class="method">
+    <div class="mhead">enableChargingMode — 切换到充电模式</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">enableChargingMode</span>();</div>
+      <p>切换到充电模式 (EN_OTG=0)。read-modify-write CTRL0[7]，不影响其他位。</p>
+    </div>
+  </div>
+
+  <div class="method">
+    <div class="mhead">enableDischargingMode — 切换到放电模式</div>
+    <div class="mbody">
+      <div class="sig"><span class="rt">bool</span> <span class="fn">enableDischargingMode</span>(uint16_t vbus_target_mV);</div>
+      <p>切换到放电模式并设置 VBUS 目标电压（内部 FB 方式）。</p>
+      <p>自动设置 FB_SEL=0 (内部参考)、EN_OTG=1、计算 VBUSREF_I。VBUS_RATIO 根据电压自动选择 (以 10.24V 为阈值)。</p>
+      <div class="note warn"><strong>注意：</strong>此函数强制使用内部 FB 方式，不适用于外部 FB 电阻分压应用。如需外部 FB 方式，请手动调用 <code>setCTRL1</code> + <code>setVBUSRefE</code> + <code>setCTRL0</code>。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 7. EXAMPLES -->
+<!-- ============================================================ -->
+<section id="examples">
+  <h2>7. 使用示例</h2>
+
+  <h3>7.1 充电模式</h3>
+  <pre><code>#include &lt;Wire.h&gt;
+#include "sc8815.h"
+
+SC8815 sc;
+
+void setup() {
+    Serial.begin(115200);
+    Wire.begin(21, 22);
+    Wire.setClock(400000);
+
+    if (!sc.begin()) {
+        Serial.println("SC8815 未检测到!");
+        while (1);
+    }
+
+    // === 充电配置 ===
+    // 3S 电池, 4.20V/节 充电
+    sc.setChargeVoltage(3, SC8815_VCELL_4V20);
+
+    // IBUS=2A, IBAT=2A
+    sc.setChargeCurrent(2000, 2000);
+
+    // 充电模式: 内部 FB, 启用涓流, 启用终止, 启用 OVP
+    sc.setCTRL1(SC8815_ICHAR_SEL_IBUS,
+                SC8815_DIS_TRICKLE_ENABLE,
+                SC8815_DIS_TERM_ENABLE,
+                SC8815_FB_SEL_INTERNAL,
+                SC8815_TRICKLE_SET_70,
+                SC8815_DIS_OVP_DISABLE);   // DIS_OVP_ENABLE=0 → OVP 保护开启
+
+    // 启动 ADC
+    sc.setCTRL3(SC8815_EN_PGATE_OFF,
+                SC8815_GPO_CTRL_OD,
+                SC8815_AD_START_ENABLE,
+                SC8815_ILIM_BW_SEL_5K,
+                SC8815_LOOP_SET_NORMAL,
+                SC8815_DIS_SHORT_FOLDBACK_ENABLE,
+                SC8815_EOC_SET_1_10,
+                SC8815_EN_PFM_DISABLE);
+
+    // 确认在充电模式
+    sc.enableChargingMode();
+
+    Serial.println("充电模式已就绪");
+}
+
+void loop() {
+    uint16_t vbus, vbat, ibus, ibat;
+    sc.readVBUSVoltage(&vbus);
+    sc.readVBATVoltage(&vbat);
+    sc.readIBUSCurrent(&ibus);
+    sc.readIBATCurrent(&ibat);
+
+    Serial.printf("VBUS=%umV  VBAT=%umV  IBUS=%umA  IBAT=%umA\n",
+                  vbus, vbat, ibus, ibat);
+
+    if (sc.isACOK()) Serial.println("  → 适配器已插入");
+    if (sc.isEOC())  Serial.println("  → 充电已终止");
+
+    delay(1000);
+}</code></pre>
+
+  <h3>7.2 放电模式 (OTG)</h3>
+  <pre><code>// 放电模式: 电池 → 5V USB 输出
+void setupDischarge() {
+    // 设置 VBUS 比率 (5V 建议用 5x)
+    sc.setRatio(SC8815_IBUS_RATIO_3x,
+                SC8815_IBAT_RATIO_12x,
+                SC8815_VBUS_RATIO_5x,          // 5x → 步进 10mV
+                SC8815_VBAT_MON_RATIO_12_5x);
+
+    // 便捷: 切换到放电模式, VBUS 目标 5000mV
+    sc.enableDischargingMode(5000);
+
+    // 或手动配置外部 FB 方式:
+    // sc.setCTRL1(..., SC8815_FB_SEL_EXTERNAL, ...);
+    // sc.setVBUSRefE(500);  // 500mV 参考, VBUS = 500mV × (1 + RUP/RDOWN)
+    // 然后 setCTRL0(SC8815_EN_OTG_ENABLE, ...);
+
+    // 放电电流限制
+    sc.setIBUSLimit(2000);   // VBUS 输出 2A 限制
+    sc.setIBATLimit(3000);   // 电池放电 3A 限制
+}</code></pre>
+
+  <h3>7.3 中断监控</h3>
+  <pre><code>void checkFaults() {
+    uint8_t status;
+    sc.getStatus(&status);
+    Serial.printf("STATUS=0x%02X\n", status);
+
+    if (sc.isOTP())        Serial.println("⚠ 过温保护! (Tj > 165°C)");
+    if (sc.isVBUSShort())  Serial.println("⚠ VBUS 短路! (VBUS < 1V)");
+    if (sc.isACOK())       Serial.println("✓ 适配器已插入");
+    if (sc.isINDET())      Serial.println("✓ 检测到负载插入");
+    if (sc.isEOC())        Serial.println("✓ 充电已终止");
+}
+
+void maskInterrupts() {
+    // 屏蔽 OTP 和 VBUS_SHORT 中断 (仅屏蔽, 不影响保护动作)
+    sc.setMask(false,   // AC_OK: 不屏蔽
+               false,   // INDET: 不屏蔽
+               true,    // VBUS_SHORT: 屏蔽
+               true,    // OTP: 屏蔽
+               false);  // EOC: 不屏蔽
+}</code></pre>
+
+  <h3>7.4 动态电源管理 (VINREG)</h3>
+  <pre><code>// 设置 VINREG=4.5V, 当 VBUS 降至 4.5V 时自动减小充电电流
+void setupVINREG() {
+    // 先设置 VINREG 比率 (建议低电压用 40x)
+    sc.setCTRL0(SC8815_EN_OTG_DISABLE,
+                SC8815_VINREG_RATIO_40x,    // 40mV/步
+                SC8815_FREQ_300kHz,
+                SC8815_DT_40ns);
+
+    // 设置 VINREG 目标电压 4500mV
+    sc.setVINREG(4500);
+
+    // 读取确认
+    uint16_t vinreg;
+    sc.getVINREG(&vinreg);
+    Serial.printf("VINREG = %u mV\n", vinreg);
+}</code></pre>
+
+  <h3>7.5 外部 FB 电阻分压放电</h3>
+  <pre><code>// 外部 RUP=100kΩ, RDOWN=10kΩ → 分压比 = 1 + 100/10 = 11
+// VBUS 目标 12V → VBUSREF_E = 12V / 11 ≈ 1091mV
+void setupExternalFB() {
+    sc.setCTRL1(SC8815_ICHAR_SEL_IBUS,
+                SC8815_DIS_TRICKLE_ENABLE,
+                SC8815_DIS_TERM_ENABLE,
+                SC8815_FB_SEL_EXTERNAL,      // 外部 FB 方式
+                SC8815_TRICKLE_SET_70,
+                SC8815_DIS_OVP_DISABLE);
+
+    sc.setVBUSRefE(1091);  // 1091mV 参考电压
+
+    // VBUS_RATIO 仍需正确设置以配合 ADC 监控
+    sc.setRatio(SC8815_IBUS_RATIO_3x,
+                SC8815_IBAT_RATIO_12x,
+                SC8815_VBUS_RATIO_12_5x,     // 12V → 12.5x 比率
+                SC8815_VBAT_MON_RATIO_12_5x);
+
+    // 切换到放电模式
+    sc.setCTRL0(SC8815_EN_OTG_ENABLE,
+                SC8815_VINREG_RATIO_100x,
+                SC8815_FREQ_300kHz,
+                SC8815_DT_40ns);
+}</code></pre>
+</section>
+
+<!-- ============================================================ -->
+<!-- 8. NOTES -->
+<!-- ============================================================ -->
+<section id="notes">
+  <h2>8. 注意事项</h2>
+
+  <h3>8.1 寄存器操作</h3>
+  <ul style="margin: 10px 0 10px 24px;">
+    <li><strong>Read-Modify-Write：</strong>所有 <code>setCTRL0()</code>、<code>setCTRL1()</code>、<code>setCTRL2()</code>、<code>setRatio()</code>、<code>setMask()</code> 均采用 RMW 策略保护寄存器中的 Reserved bits，避免因直接覆写导致芯片异常。</li>
+    <li><strong>CTRL2 FACTORY 位：</strong>数据手册强制要求 MCU 上电后将 CTRL2[3] 置 1。库中 <code>setCTRL2()</code> 默认参数已自动设为 <code>SC8815_FACTORY_POWERUP</code>。</li>
+    <li><strong>PSTOP 限制：</strong>CTRL0、CTRL1、CTRL2、CTRL3 寄存器建议仅在 PSTOP=HIGH (待机状态) 时修改。</li>
+  </ul>
+
+  <h3>8.2 I²C 初始化</h3>
+  <ul style="margin: 10px 0 10px 24px;">
+    <li><code>begin()</code> <strong>不会</strong>调用 <code>Wire.begin()</code>。调用方必须在调用 <code>begin()</code> 之前自行完成 I²C 总线的引脚配置和时钟设置。</li>
+    <li>推荐 I²C 速率 400kHz (Fast Mode)。</li>
+  </ul>
+
+  <h3>8.3 ADC 使用</h3>
+  <ul style="margin: 10px 0 10px 24px;">
+    <li>读取任何 ADC 值之前，必须先通过 <code>setCTRL3()</code> 将 <code>ad_start</code> 设为 <code>SC8815_AD_START_ENABLE</code>。</li>
+    <li>ADC 为 10-bit 分辨率，分布在两个寄存器中 (高 8 位 + 低 2 位)。</li>
+    <li>VBUS_RATIO=12.5x 时最大可测 ~25.6V，超出将饱和。</li>
+  </ul>
+
+  <h3>8.4 电流限制假设</h3>
+  <ul style="margin: 10px 0 10px 24px;">
+    <li>所有电流计算默认假设采样电阻 <strong>RSNS1 = RSNS2 = 10mΩ</strong>。如果实际电路使用不同阻值的采样电阻，需要修改库代码中的对应常量。</li>
+    <li>实际限流精度取决于采样电阻的温度系数。</li>
+  </ul>
+
+  <h3>8.5 保护功能</h3>
+  <table>
+    <tr><th>保护</th><th>触发条件</th><th>行为</th></tr>
+    <tr><td>UVP</td><td>输入电压低于阈值</td><td>停止充电 / 关断输出</td></tr>
+    <tr><td>OVP</td><td>输出电压超过阈值</td><td>停止充电 (可通过 DIS_OVP 控制)</td></tr>
+    <tr><td>OCP</td><td>电流超过 IBUS_LIM / IBAT_LIM</td><td>限流</td></tr>
+    <tr><td>SCP</td><td>VBUS &lt; 1V (短路)</td><td>电流折返至 22%(IBUS) / 10%(IBAT)</td></tr>
+    <tr><td>OTP</td><td>Tj &gt; 165°C</td><td>关断输出, 滞后 ~35°C 恢复</td></tr>
+  </table>
+
+  <h3>8.6 OVP 命名约定</h3>
+  <div class="note warn">
+    库中 DIS_OVP 等以 <code>DIS_</code> 开头的枚举，其 <code>_ENABLE</code> 值对应 bit = 0 (即"启用"该禁用位 = 保护开启)，<code>_DISABLE</code> 值对应 bit = 1 (即该位生效 = 保护关闭)。请仔细阅读每个枚举的注释以免配置错误。
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- FOOTER -->
+<!-- ============================================================ -->
+<footer>
+  <p>SC8815 I²C 驱动库文档 &nbsp;|&nbsp; 基于 sc8815.h / sc8815.cpp 生成 &nbsp;|&nbsp; 2026-06-17</p>
+  <p>Southchip SC8815 — 高效率同步双向 Buck-Boost 充电控制器</p>
+</footer>
+
+</div>
+</body>
+</html>
